@@ -26,5 +26,5 @@ async def send_request_aiohttp(params):
         try:
             answer = await fetch(session, params)
         except Exception as msg:
-            raise
+            return (None,None,str(msg))
         return answer

@@ -23,13 +23,14 @@ class ETH:
         self.smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
         self.smart_contract = None
 
-
+    # Start Entrypoint
     async def start(self):
         # (mode,address,label) = await self.create_address('Slava','Slava')
         # print(address)
         print('start')
         return True
 
+    # Curremt Library Method For NODE  ETHERIUM
     async def create_address(self,phrase,label):
         '''
         this method create Eth Address and set Label for address
@@ -72,19 +73,6 @@ class ETH:
         # list = await self.parity_allAccountsInfo()
         return list
 
-
-    # RPC API REQUEST FOR NODE ETHERIUM
-    async def parity_setAccountName(self,body):
-        data = (1, 'parity_setAccountName', body)
-        params = self.create_params(data)
-        try:
-            answer = await self.request_node(params)
-        except Exception as msg:
-            #   TODO CHECK THIS LOG FILE
-            # raise
-            return (500,str(msg))
-        return answer
-
     async def find_address_name(self,address):
         '''
         find name label in address when user are send
@@ -111,32 +99,51 @@ class ETH:
         # return hash transaqtion
         return 'dfkjhgnkjdsfnksdjfkjsd%^SA&5d'
 
+    # RPC API REQUEST FOR NODE ETHERIUM
+    async def parity_setAccountName(self,body):
+        data = (1, 'parity_setAccountName', body)
+        params = self.create_params(data)
+        try:
+            answer = await self.request_node(params)
+        except Exception as msg:
+            #   TODO CHECK THIS LOG FILE
+            # raise
+            return (500,str(msg))
+        return answer
+
     async def gas_transaqtion(self):
         # return how much eth need to transaqtion
         return 2.15
-
-    async def check_ballance(self, address):
-        # if ballance >0 send to HW
-        if self.smart_contract is None:
-            ballance = self.web3.eth.getBalance(address)
-        else:
-            contract = self.web3.eth.contract(address=self.smart_contract, abi=abi)
-            ballance = contract.functions.balanceOf(address).call()
-
-        # if tether gas_transaqtion send to address
-        if ballance > 100:
-            print('check gas transaqtion')
-            print('send to UW for move transaqtion')
-            return print("send to HW")
-        else:
-            # create task for checkBallance when address is created
-            return print('Create new Task Checked')
 
     async def notify_other(self):
         # send to matchenger and other resources
         return 'Ok'
 
+    # Helper for Request for crypto Nodes Etherium
+    def create_params(self, body):
+        '''
+        Create Params for aiohttp request
+        :param body: (key_request,method_callable,args_request)
+        :return:
+
+        '''
+        (key, method, args) = body
+        params = {
+            'method': 'POST',
+            'headers': {'content-type': 'application/json'},
+            'data': json.dumps({"jsonrpc": "2.0", "id": key, "method": method, "params": args})
+        }
+        params['url'] = self.url
+        return params
+
     async def request_node(self, params):
+        '''
+        send request for aiohttp and fetch answer data in CryptoNodes ETH
+        :param params: create with method create_params
+        :return:
+        (code,data['result'])
+        (200,'Ok')
+        '''
         answer = await send_request_aiohttp(params)
         (mode, code, data) = answer
         if code is None:
@@ -146,6 +153,7 @@ class ETH:
         else:
             return (code, mode)
 
+    # Helper Utils for request Eth Node
     def check_sum_address(self,address):
         '''
         Will convert an upper or lowercase Ethereum address to a checksum address.
@@ -160,17 +168,27 @@ class ETH:
         else:
             return None
 
+    def hex_to_string(self,hex):
+        '''
+        Returns the number representation of a given HEX value as a string.
+        :param hex: 0xea
+        :return:
+        "234"
+        '''
+        answer = self.web3.hexToNumberString(hex)
+        return answer
 
-    def create_params(self, body):
-        
-        (key, method, args) = body
-        params = {
-            'method': 'POST',
-            'headers': {'content-type': 'application/json'},
-            'data': json.dumps({"jsonrpc": "2.0", "id": key, "method": method, "params": args})
-        }
-        params['url'] = self.url
-        return params
+    def number_to_hex(self,number):
+        '''
+        Returns the HEX representation of a given number value.
+        :param number: "234"
+        :return:
+        0xea
+        '''
+        answer = self.web3.numberToHex(number)
+        return answer
+
+
 
 async def main():
     print('server was started')
