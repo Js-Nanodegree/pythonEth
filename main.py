@@ -85,11 +85,14 @@ class ETH:
             return (500,str(msg))
         return answer
 
-
-
-    async def find_account_name(self,address = '0xF4D34Bb387a65B459d065238A3f093A89cB54e30'):
+    async def find_address_name(self,address):
         '''
-        TODO ADDRESS IN ACCOUNT INFO DIFFRENCE WHEN CREATE ADDRESS
+        find name label in address when user are send
+
+        :param address: '0xF4D34Bb387a65B459d065238A3f093A89cB54e30'
+        :return:
+        (address,name_address)
+        (500,Error message)
         '''
         data = (1, 'parity_accountsInfo', [])
         params = self.create_params(data)
@@ -146,9 +149,17 @@ class ETH:
     def check_sum_address(self,address):
         '''
         Will convert an upper or lowercase Ethereum address to a checksum address.
+
+        :param address:
+        :return:
         '''
-        address = self.web3.toChecksumAddress(address)
-        return address
+        correct_address = web3.isAddress(address)
+        if correct_address == True:
+            address = self.web3.toChecksumAddress(address)
+            return address
+        else:
+            return None
+
 
     def create_params(self, body):
         
