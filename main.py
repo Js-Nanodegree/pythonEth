@@ -1,10 +1,10 @@
+import asyncio
 import json
+
 from web3 import Web3
-import  asyncio
-import aiohttp
-import async_timeout
-from utils import send_request_aiohttp
+
 import abi
+from utils import send_request_aiohttp
 
 url = "https://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd"
 
@@ -51,7 +51,6 @@ class ETH:
                 return (self.smart_contract,address,None)
         elif code == 500:
            return (self.smart_contract,address, data)
-
     async def parity_setAccountName(self,body):
         data = (1, 'parity_setAccountName', body)
         params = self.create_params(data)
@@ -62,9 +61,10 @@ class ETH:
             # raise
             return (500,str(msg))
         return answer
+
     async def list_account(self):
         # return all address in current wallet
-        list = web3.parity.personal.listAccounts()
+        list = self.web3.parity.personal.listAccounts()
         return ['One','Two','Three']
 
     async def send_transaqtion(self):
@@ -76,12 +76,22 @@ class ETH:
         # return how much eth need to transaqtion
         return 2.15
 
-    async def check_ballance(self):
-        # create task for checkBallance when address is created
+    async def check_ballance(self, address):
         # if ballance >0 send to HW
+        if self.smart_contract is None:
+            ballance = self.web3.eth.getBalance(address)
+        else:
+            contract = self.web3.eth.contract(address=self.smart_contract, abi=abi)
+            ballance = contract.functions.balanceOf(address).call()
+
         # if tether gas_transaqtion send to address
-            # send to HW
-        return 'create task'
+        if ballance > 100:
+            print('check gas transaqtion')
+            print('send to UW for move transaqtion')
+            return print("send to HW")
+        else:
+            # create task for checkBallance when address is created
+            return print('Create new Task Checked')
 
     async def notify_other(self):
         # send to matchenger and other resources
@@ -96,7 +106,6 @@ class ETH:
             return (code, data)
         else:
             return (code, mode)
-
     def create_params(self, body):
         (key, method, args) = body
         params = {
