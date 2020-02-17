@@ -51,12 +51,29 @@ class ETH:
         # create task for check_ballance()
         (code,data) = label_account
         if code == 200:
-            if data['result'] ==True:
+            if data['result'] == True:
                 return (self.smart_contract,address,label)
             else:
                 return (self.smart_contract,address,None)
         elif code == 500:
            return (self.smart_contract,address, data)
+
+    async def take_list_address(self):
+        '''
+        if using web3.py we take all address work in currnet node
+        if using RPC.API parity_allAccountsInfo we take all address with detail info
+            {name:'Example',meta:'Something',UUID:'Some Number Hex'}
+
+        :return:
+        [address_eth_isUpperCase, ..., ...]
+        '''
+        # return all address in current wallet
+        list = self.web3.parity.personal.listAccounts()
+        # list = await self.parity_allAccountsInfo()
+        return list
+
+
+    # RPC API REQUEST FOR NODE ETHERIUM
     async def parity_setAccountName(self,body):
         data = (1, 'parity_setAccountName', body)
         params = self.create_params(data)
@@ -68,12 +85,7 @@ class ETH:
             return (500,str(msg))
         return answer
 
-    async def list_account(self):
-        # return all address in current wallet
-        list = self.web3.parity.personal.listAccounts()
 
-        list = await self.parity_allAccountsInfo()
-        return list
 
     async def find_account_name(self,address = '0xF4D34Bb387a65B459d065238A3f093A89cB54e30'):
         '''
