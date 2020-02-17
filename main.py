@@ -15,23 +15,29 @@ url = "https://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd"
 # data = web3.eth.accounts
 # print(data)
 #
-
 class ETH:
     def __init__(self):
         self.loop = asyncio.get_event_loop()
-        self.url = "http://172.17.221.163:18545/"
+        self.url = "http://172.17.221.163:8545/"
         self.web3 = Web3(Web3.HTTPProvider("http://172.17.221.163:8545/"))
         self.smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
         self.smart_contract = None
 
 
     async def start(self):
-        data = await self.list_account()
-        print(data)
+        # (mode,address,label) = await self.create_address('Slava','Slava')
+        # print(address)
         print('start')
         return True
 
-    async def create_address(self,phrase,label ='labelSlava'):
+    async def create_address(self,phrase,label):
+        '''
+        this method create Eth Address and set Label for address
+        :param phrase:  Take in Config password phase
+        :param label: Remote ID
+        :return:
+        (current_contract ,address_wallet, label_wallet)
+        '''
         # create address
         if self.smart_contract is None:
             print('create account Eth')
@@ -65,7 +71,25 @@ class ETH:
     async def list_account(self):
         # return all address in current wallet
         list = self.web3.parity.personal.listAccounts()
-        return ['One','Two','Three']
+
+        list = await self.parity_allAccountsInfo()
+        return list
+
+    async def find_account_name(self,address = '0xF4D34Bb387a65B459d065238A3f093A89cB54e30'):
+        '''
+        TODO ADDRESS IN ACCOUNT INFO DIFFRENCE WHEN CREATE ADDRESS
+        '''
+        data = (1, 'parity_accountsInfo', [])
+        params = self.create_params(data)
+        try:
+            answer = await self.request_node(params)
+        except Exception as msg:
+            #   TODO CHECK THIS LOG FILE
+            # raise
+            return (500, str(msg))
+        (code,data) = answer
+        name = data['result']
+        return (address,name[address])
 
     async def send_transaqtion(self):
         # if this transaqtion is not blocked
@@ -106,7 +130,16 @@ class ETH:
             return (code, data)
         else:
             return (code, mode)
+
+    def check_sum_address(self,address):
+        '''
+        Will convert an upper or lowercase Ethereum address to a checksum address.
+        '''
+        address = self.web3.toChecksumAddress(address)
+        return address
+
     def create_params(self, body):
+        
         (key, method, args) = body
         params = {
             'method': 'POST',
