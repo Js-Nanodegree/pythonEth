@@ -1,12 +1,9 @@
 import asyncio
 import json
-
 from web3 import Web3
-
-import abi
 from utils import send_request_aiohttp
-
-url = "https://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd"
+import abi
+# url = "https://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd"
 
 # abi = json.loads('[{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"unpause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"paused","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"pause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"},{"name":"_releaseTime","type":"uint256"}],"name":"mintTimelocked","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[],"name":"Pause","type":"event"},{"anonymous":false,"inputs":[],"name":"Unpause","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]')
 # user_address=['0x4E9dD5Eeda2Bee36a7c1FE6a90A349653D3EE19C','0x96E1c8eC4802F959A84a48f8b65A603f8Bd9A013','0x88b534121fa9D03CeA7a12d2F3CA8C8de8971697']
@@ -15,18 +12,24 @@ url = "https://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd"
 # data = web3.eth.accounts
 # print(data)
 #
+
+wallet_eth='0x7e07c035242eb6874460d8c033eee25a333988d1'
+wallet_usdt='0x3F9579D03d612E07dDc537feC32E8bb0Cc3cB58f'
+
 class ETH:
     def __init__(self):
         self.loop = asyncio.get_event_loop()
-        self.url = "http://172.17.221.163:8545/"
-        self.web3 = Web3(Web3.HTTPProvider("http://172.17.221.163:8545/"))
+        self.url = "http://172.17.123.218:8545/"
+        self.web3 = Web3(Web3.HTTPProvider("http://172.17.123.218:8545/"))
         self.smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
         self.smart_contract = None
 
     # Start Entrypoint
     async def start(self):
-        # (mode,address,label) = await self.create_address('Slava','Slava')
-        # print(address)
+        (mode,address,data) = await self.check_ballance(self.check_sum_address(address = wallet_eth))
+        print(mode,address,data)
+        (mode,address,data) = await self.check_ballance(self.check_sum_address(address = wallet_usdt))
+        print(mode,address,data)
         print('start')
         return True
 
@@ -59,6 +62,26 @@ class ETH:
         elif code == 500:
            return (self.smart_contract,address, data)
 
+    async def check_ballance(self,address):
+        '''
+        Returns the balance of the given account at the block specified by block_identifier.
+        account may be a checksum address or an ENS name
+        :param address: Checksum Address
+        :return:
+        (address,ballance,smart_contract)
+        '''
+        connected = self.web3.isConnected()
+        if connected == True:
+            if self.smart_contract is None:
+                ballance = self.web3.eth.getBalance(address)
+                return (address,self.from_wei(ballance),None)
+            else:
+                contract = self.web3.eth.contract(address=self.smart_contract, abi=abi)
+                ballance = contract.functions.balanceOf(address).call()
+            return (address,self.from_wei(ballance),self.smart_contract)
+        else:
+            return (None,None,None)
+
     async def take_list_address(self):
         '''
         if using web3.py we take all address work in currnet node
@@ -76,6 +99,7 @@ class ETH:
     async def find_address_name(self,address):
         '''
         find name label in address when user are send
+        TODO NOT WORK WITH ADDRESS IN LOCAL BASE AND CREATE ADDRESS
 
         :param address: '0xF4D34Bb387a65B459d065238A3f093A89cB54e30'
         :return:
@@ -98,6 +122,26 @@ class ETH:
         # if this transaqtion is not blocked
         # return hash transaqtion
         return 'dfkjhgnkjdsfnksdjfkjsd%^SA&5d'
+
+    async def send_signed_transaction(self,address):
+        # Special Note: The nonce=self.eth.getTransactionCount(self.eth.coinbase) here is to get the number of transactions sent from this address!
+        # nonce is unique, if it is not unique, it will fail!
+        nonce = self.eth.getTransactionCount(self.eth.coinbase)
+        gasPrice = self.eth.gasPrice
+
+        signed_txn = self.eth.account.signTransaction(dict(
+            nonce=nonce,
+            gasPrice=gasPrice,
+            gas=100000,
+            to=address,
+            value=11,
+            data=b'',
+            chainId=3
+        ), "0xee9eb15a7f063b484355e7372bcbcff186bc6a9aa9575cd5b26fda323fc72f45")
+
+        signed = self.eth.sendRawTransaction(signed_txn.rawTransaction);
+        print(signed);
+        return signed
 
     # RPC API REQUEST FOR NODE ETHERIUM
     async def parity_setAccountName(self,body):
@@ -210,12 +254,18 @@ class ETH:
         :param address:
         :return:
         '''
-        correct_address = web3.isAddress(address)
+        correct_address = self.web3.isAddress(address)
         if correct_address == True:
             address = self.web3.toChecksumAddress(address)
             return address
         else:
             return None
+
+    def from_wei(self,ballance):
+        if self.smart_contract is None:
+            return self.web3.fromWei(ballance,'ether')
+        else:
+            return self.web3.fromWei(ballance,'mwei')
 
     def hex_to_string(self,hex):
         '''
