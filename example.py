@@ -1,7 +1,4 @@
 import asyncio
-import json
-
-from web3 import Web3
 
 from Module.ETH import ETH
 
@@ -10,26 +7,108 @@ wallet_usdt = '0x3F9579D03d612E07dDc537feC32E8bb0Cc3cB58f'
 url = "http://172.17.123.218:8545/"
 smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
+<<<<<<< HEAD
+=======
 abi = json.loads(
     '[{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"unpause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"paused","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"pause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"},{"name":"_releaseTime","type":"uint256"}],"name":"mintTimelocked","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[],"name":"Pause","type":"event"},{"anonymous":false,"inputs":[],"name":"Unpause","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]'
 )
 
+>>>>>>> ff1179f... save stage for Test Transaction
 
 class Example:
     def __init__(self):
         self.loop = asyncio.get_event_loop()
+<<<<<<< HEAD
+        self.eth = ETH(
+            loop=asyncio.get_event_loop(),
+            smart_contract=None,
+            hw='0x2a1a93439242212f039Aa020f0e74169ec889e32',
+            url="http://172.17.123.218:8545/",
+            # url = 'http://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd',
+            key='0x00145ad01a3c93226fdf45d42221fe0f6810e610',
+            mnemonc='pager glorified chokehold slacking scenic abruptly synopses easter tackle pang nuttiness crummiest',
+            passphrase='JOINMICROSTARK'
+        )
+        self.usdt = ETH(
+            loop=asyncio.get_event_loop(),
+            smart_contract='0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            hw='0x2a1a93439242212f039Aa020f0e74169ec889e32',
+            url="http://172.17.123.218:8545/",
+            # url = 'http://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd',
+            key='0x00145ad01a3c93226fdf45d42221fe0f6810e610',
+            mnemonc='pager glorified chokehold slacking scenic abruptly synopses easter tackle pang nuttiness crummiest',
+            passphrase='JOINMICROSTARK'
+        )
+        self.address = [
+            '0xe0f4Cd3dcC2DECA346bf4099E57f9771316E07C2',
+            '0x2a1a93439242212f039Aa020f0e74169ec889e32'
+        ]
+=======
         self.url = url
         self.web3 = Web3(Web3.HTTPProvider(url))
         self.key = '0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318'
         self.address = '0x91a300C11833d906aC811B4a0C3B93D9f0A83E24',
         self.passphrase = 'JOINMICROSTARK'
+>>>>>>> ff1179f... save stage for Test Transaction
 
     async def start(self):
-        '''
+        """
         ValueError: {'code': -32010, 'message': 'Transaction gas is too low.
         There is not enough gas to cover minimal cost of the transaction (minimal: 21584, got: 3).
         Try increasing supplied gas.'}
         :return:
+<<<<<<< HEAD
+        """
+
+        # create Account
+        data = await self.create_account()
+        print(data)
+
+        # check_balance
+        data = await self.check_ballance()
+        print(data)
+        # check the syncked block
+        data = await self.eth.get_block()
+        data = await self.usdt.get_block()
+        # check all account
+        data = await self.all_account()
+        print(data)
+
+        self.loop.call_later(
+            3,
+            self.loop.create_task,
+            self.start()
+        )
+
+    async def all_account(self):
+        body = (self.address[0])
+        data = await self.eth.take_list_address(body)
+        # print(data)
+        data = await self.usdt.take_list_address(body)
+        # print(data)
+        return 'All Accounts'
+
+    async def create_account(self):
+        label = 'Trash'
+        # print(label)
+        (code,mode,data) = await self.eth.create_address(label)
+        # print((code,mode,data))
+        data = await self.eth._kill_account(address=data, phrase='Slava')
+        # print(data)
+
+        return 'Create Account'
+
+    async def check_ballance(self):
+        for item in self.address:
+            data = await self.usdt.check_ballance(item)
+            print(data)
+            data = await self.eth.check_ballance(item)
+            print(data)
+
+        return 'CheckBallance'
+
+        return (200, send_raw_transaction)
+=======
         '''
         # eth = ETH(None)
 
@@ -78,3 +157,10 @@ class Example:
     #         except Exception as msg:
     #             raise
     #     return send_transaction
+<<<<<<< HEAD
+
+# поддержка 2 уровня поддержки jivosite вебвизор мессанджеры аналитика
+# yandex metrica yandex webvisor google tag manager
+>>>>>>> ff1179f... save stage for Test Transaction
+=======
+>>>>>>> 3441c5a... Update Create Acount with delete account if Create is not work

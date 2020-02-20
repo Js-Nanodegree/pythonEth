@@ -1,11 +1,10 @@
 import asyncio
 
-from Module.ETH import ETH
 from example import Example
 
 
 async def main():
-    print('server was started')
+    print("server was started")
     loop = asyncio.get_running_loop()
     # unit = ETH()
     unit = Example()
