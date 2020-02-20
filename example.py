@@ -34,21 +34,29 @@ class Example:
         # eth = ETH(None)
 
         eth = ETH(
-            loop = asyncio.get_event_loop(),
-            smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-            HW = '',
-            url = "http://172.17.123.218:8545/",
-            key = '0x00145ad01a3c93226fdf45d42221fe0f6810e610',
-            mnemonc = 'pager glorified chokehold slacking scenic abruptly synopses easter tackle pang nuttiness crummiest',
-            passphrase = 'JOINMICROSTARK'
+            loop=asyncio.get_event_loop(),
+            # smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            smart_contract=None,
+            HW='',
+            url="http://172.17.123.218:8545/",
+            # url = 'http://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd',
+            key='0x00145ad01a3c93226fdf45d42221fe0f6810e610',
+            mnemonc='pager glorified chokehold slacking scenic abruptly synopses easter tackle pang nuttiness crummiest',
+            passphrase='JOINMICROSTARK'
         )
-        # body = ('0x91a300C11833d906aC811B4a0C3B93D9f0A83E24',
-        #         '0x91a300C11833d906aC811B4a0C3B93D9f0A83E24', 123, 12)
-        # body = ('0x91a300C11833d906aC811B4a0C3B93D9f0A83E24')
-        # data = await eth.take_list_address(body)
-        body=(self.passphrase,'UW')
-        data = await eth.create_address(body)
-        print(data)
+
+        address = [
+            '0xe0f4Cd3dcC2DECA346bf4099E57f9771316E07C2',
+            '0x2a1a93439242212f039Aa020f0e74169ec889e32'
+        ]
+        # create Account
+        # body = (self.passphrase, 'Trash')
+        # data = await eth.create_address(body)
+        # print(data)
+        # check_ballance
+        for item in address:
+            data = await eth.check_ballance(item)
+            print(data)
         # (contract, address, label) = await eth.create_address('Kirkoroff', 'VIRTEKPAYTEST')
         # print(contract, address, label)
         # if address is None:
@@ -70,6 +78,3 @@ class Example:
     #         except Exception as msg:
     #             raise
     #     return send_transaction
-
-# поддержка 2 уровня поддержки jivosite вебвизор мессанджеры аналитика
-# yandex metrica yandex webvisor google tag manager

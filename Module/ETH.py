@@ -8,17 +8,18 @@ from utils import send_request_aiohttp
 abi = json.loads(
     '[{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"unpause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"paused","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"pause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"},{"name":"_releaseTime","type":"uint256"}],"name":"mintTimelocked","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[],"name":"Pause","type":"event"},{"anonymous":false,"inputs":[],"name":"Unpause","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]')
 
-wallet_eth = '0x7e07c035242eb6874460d8c033eee25a333988d1'
-wallet_usdt = '0x3F9579D03d612E07dDc537feC32E8bb0Cc3cB58f'
-url = "http://172.17.123.218:8545/"
-smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+# wallet_eth = '0x7e07c035242eb6874460d8c033eee25a333988d1'
+# wallet_usdt = '0x3F9579D03d612E07dDc537feC32E8bb0Cc3cB58f'
+# url = "http://172.17.123.218:8545/"
+# smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+#
+# error = {
+#     'Web3_Not_Work': {'code': '-200', 'mode': 'Connct to reserved address'},
+# }
 
-error = {
-    'Web3_Not_Work': {'code': '-200', 'mode': 'Connct to reserved address'},
-}
 
 class ETH:
-    def __init__(self,loop,smart_contract,HW,url,key,mnemonc,passphrase):
+    def __init__(self, loop, smart_contract, HW, url, key, mnemonc, passphrase):
         self.loop = asyncio.get_event_loop()
         self.smart_contract = smart_contract
         self.HW = HW
@@ -29,43 +30,40 @@ class ETH:
         self.web3 = Web3(Web3.HTTPProvider(url))
 
     # Curremt Library Method For NODE  ETHERIUM
-    async def create_address(self,body):
+    async def create_address(self, body):
         '''
         this method create Eth Address and set Label for address
-        :param phrase:  Take in Config password phase
-        :param label: Remote ID
+        :param body: (phrase, label) => (Take in Config password phase, Remote ID)
         :return:
         (current_contract ,address_wallet, label_wallet)
         (200, '0x967a9C9f42ccC2891Cf89731E6D4F1279C0dB9d7', 'HW')
-        [
-          '0x967a9c9f42ccc2891cf89731e6d4f1279c0db9d7',
-          '0xe279dc9d339d762e69015a9049242a64859d08e9'
-        ]
         '''
         # create address
-        (phrase,label) = body
-        address = self.web3.parity.personal.newAccount(phrase)
+        (phrase, label) = body
+        address = self.web3.parity.personal.newAccount(self.passphrase)
 
         # set label for address
         body = (address, self.passphrase)
-        unlock_account = await self._unlock_account(body)
-        body = [self._check_sum_address(address), label]
-        try:
-            label_account = await self._parity_setAccountName(body)
-        # create task for check_ballance()
-        except Exception as msg:
-            return (None, None, str(msg))
 
-        (code,mode, data) = label_account
-        if code == 200:
-            if data['result'] == True:
-                return (200, address, label)
-            else:
-                return (code, address, None)
+        (code, mode, data) = await self._unlock_account(body)
+        if code is None:
+            data = await self._kill_account(address, phrase)
+            return (data, 'Unlock Account', 'Account is Lock')
+
+        elif code == 200:
+            body = [self._check_sum_address(address), label]
+            (code, mode, data) = await self._parity_setAccountName(body)
+
+            if code == 200:
+                if data['result'] == True:
+                    return (code, address, label)
+                else:
+                    return (code, address, None)
         else:
-            return (code, address, data)
+            data = await self._kill_account(address, phrase)
+            return (data, mode, data)
 
-    async def check_ballance(self, address, smart_contract=None):
+    async def check_ballance(self, address):
         '''
         Returns the balance of the given account at the block specified by block_identifier.
         account may be a checksum address or an ENS name
@@ -78,17 +76,19 @@ class ETH:
             connect with Web3 for main Node
             '''
             if self.smart_contract is None:
-                ballance = self.web3.eth.getBalance(address)
+                ballance = self.web3.eth.getBalance(
+                    self._check_sum_address(address))
                 return (address, self._from_wei(ballance), None)
             else:
                 contract = self._build_contract_usdt()
-                ballance = contract.functions.balanceOf(address).call()
+                ballance = contract.functions.balanceOf(
+                    self._check_sum_address(address)).call()
                 return (address, self._from_wei(ballance), self.smart_contract)
         else:
             '''
             Need Connect to Reserved Node
             '''
-            return (None, None, None)
+            return (None, 'WEB3 IS NOT WORKING', None)
 
     async def take_list_address(self, body):
         '''
@@ -100,13 +100,13 @@ class ETH:
         [address_eth_isUpperCase, ..., ...]
         '''
         responce = {}
-        (hw)=body
-        (code,mode,data) = await self._parity_allAccountsInfo()
-        for (x,i) in  data['result'].items():
+        (hw) = body
+        (code, mode, data) = await self._parity_allAccountsInfo()
+        for (x, i) in data['result'].items():
             responce[x] = i['name']
         # responce.remove(hw)
 
-        return (code,mode,responce)
+        return (code, mode, responce)
 
     async def send_transaction(self, body):
         """
@@ -123,15 +123,15 @@ class ETH:
         value = ballance-sender
         """
         (to_address, from_address, value, gas) = body
-        (_, value, _) = await self.check_ballance(address=from_address, smart_contract=self.smart_contract)
+        (_, value, _) = await self.check_ballance(address=from_address)
         if value == 0:
             # TODO Wait a transaction count
             return (200, None, value)
         else:
-            body = (address, value, gas)
+            body = (to_address, value, gas)
             trx = await self._create_transaction(body)
             try:
-                trx_hash = await self._send_raw_transaction(data)
+                trx_hash = await self._send_raw_transaction(trx)
             except Exception as msg:
                 return (500, str(msg), value)
         return (200, trx_hash, value)
@@ -144,11 +144,13 @@ class ETH:
         :return:
         HexBytes('0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331')
         '''
-        create_raw_transaction = self.web3.eth.account.sign_transaction(transaction, self.key)
+        create_raw_transaction = self.web3.eth.account.sign_transaction(
+            transaction, self.key)
         try:
-            send_raw_transaction = self.web3.eth.sendRawTransaction(create_raw_transaction.rawTransaction)
+            send_raw_transaction = self.web3.eth.sendRawTransaction(
+                create_raw_transaction.rawTransaction)
         except Exception as msg:
-           raise
+            raise
 
         return (200, send_raw_transaction)
 
@@ -160,8 +162,7 @@ class ETH:
             answer = await self._request_node(params)
         except Exception as msg:
             #   TODO CHECK THIS LOG FILE
-            # raise
-            return (500, str(msg))
+            return (None, 'Label Not Set', str(msg))
         return answer
 
     async def _parity_allAccountsInfo(self):
@@ -170,6 +171,27 @@ class ETH:
         answer = await self._request_node(params)
         return answer
 
+    async def _kill_account(self, address, phrase):
+        '''
+        Unlocks the given account for duration seconds.
+        If duration is None then the account will remain unlocked indefinitely.
+        Returns boolean as to whether the account was successfully unlocked.
+        :param address: (address,passphrase)
+        :param phrase: (address,passphrase)
+        :return:
+        (code,Boolean)
+        '''
+        data = [self.passphrase, phrase]
+        for item in data:
+            body = (1, 'parity_killAccount', [address, item])
+            params = self._create_params(body)
+            try:
+                answer = await self._request_node(params)
+            except Exception as msg:
+                pass
+
+        return None
+
     async def _unlock_account(self, body):
         '''
         Unlocks the given account for duration seconds.
@@ -177,15 +199,16 @@ class ETH:
         Returns boolean as to whether the account was successfully unlocked.
         :param body: (address,passphrase)
         :return:
-        (code,Boolean)
+        (code,mode,Boolean)
+        (200,'Ok', logic)
         '''
         (address, passphrase) = body
         try:
-            logic = self.web3.parity.personal.unlockAccount(address, passphrase)
+            answer = self.web3.parity.personal.unlockAccount(
+                address, passphrase)
         except Exception as msg:
-            print(str(msg))
-            return (msg['code'], msg['message'], msg['message'])
-        return (200, logic)
+            return (None, 'Account is lock', str(msg))
+        return (200, 'OK', answer)
 
     # Helper for Request for crypto Nodes Etherium
     async def get_transaction(self, hash):
@@ -196,7 +219,6 @@ class ETH:
         Create Params for aiohttp request
         :param body: (key_request,method_callable,args_request)
         :return:
-
         '''
         (key, method, args) = body
         params = {
@@ -238,7 +260,6 @@ class ETH:
             }
         ]
         '''
-        (key, method, args) = body
         params = {
             'method': 'GET',
         }
@@ -274,23 +295,24 @@ class ETH:
         else:
             contract = self._build_contract_usdt()
             transaction = contract.functions.transfer(address, value).buildTransaction({
-                    'chainId': 1,
-                    'gas': gas,
-                    'gasPrice': gasPrice,
-                    'nonce': nonce,
+                'chainId': 1,
+                'gas': gas,
+                'gasPrice': gasPrice,
+                'nonce': nonce,
             })
         return transaction
 
     async def __generate_phase(self):
-        body =(1,'parity_generateSecretPhrase',[])
+        body = (1, 'parity_generateSecretPhrase', [])
         params = self._create_params(body)
-        (code,mode,data) = await self._request_node(params)
-        body = (1,'parity_phraseToAddress',[data['result']])
-        params = self._create_params(body)
-        (code,mode,param) = await self._request_node(params)
-        body =[param['result'],data['result']]
+        (code, mode, data) = await self._request_node(params)
 
-        return (code,mode,body)
+        body = (1, 'parity_phraseToAddress', [data['result']])
+        params = self._create_params(body)
+        (code, mode, param) = await self._request_node(params)
+
+        answer = [param['result'], data['result']]
+        return (code, mode, answer)
 
     async def _request_node(self, params):
         '''
@@ -310,7 +332,6 @@ class ETH:
     def _check_sum_address(self, address):
         '''
         Will convert an upper or lowercase Ethereum address to a checksum address.
-
         :param address:
         :return:
         '''
