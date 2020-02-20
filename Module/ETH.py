@@ -3,8 +3,10 @@ import json
 
 from web3 import Web3
 
-import abi
 from utils import send_request_aiohttp
+
+abi = json.loads(
+    '[{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"unpause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"paused","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"pause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"},{"name":"_releaseTime","type":"uint256"}],"name":"mintTimelocked","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[],"name":"Pause","type":"event"},{"anonymous":false,"inputs":[],"name":"Unpause","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]')
 
 wallet_eth = '0x7e07c035242eb6874460d8c033eee25a333988d1'
 wallet_usdt = '0x3F9579D03d612E07dDc537feC32E8bb0Cc3cB58f'
@@ -13,53 +15,53 @@ smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 error = {
     'Web3_Not_Work': {'code': '-200', 'mode': 'Connct to reserved address'},
-
 }
 
 class ETH:
-    def __init__(self):
+    def __init__(self,loop,smart_contract,HW,url,key,mnemonc,passphrase):
         self.loop = asyncio.get_event_loop()
+        self.smart_contract = smart_contract
+        self.HW = HW
         self.url = url
+        self.key = key
+        self.mnemonc = mnemonc
+        self.passphrase = passphrase
         self.web3 = Web3(Web3.HTTPProvider(url))
-        self.smart_contract = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-        self.smart_contract = None
-        self.key = '0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318'
-        self.passphrase = 'JOINMICROSTARK'
-
-    # Start Entrypoint
-    async def start(self):
-        (mode,address,data) = await self.check_ballance(self._check_sum_address(address = wallet_eth))
-        print(mode,address,data)
-        (mode,address,data) = await self.check_ballance(self._check_sum_address(address = wallet_usdt))
-        print(mode,address,data)
-        print('start')
-        return True
 
     # Curremt Library Method For NODE  ETHERIUM
-    async def create_address(self,phrase,label):
+    async def create_address(self,body):
         '''
         this method create Eth Address and set Label for address
         :param phrase:  Take in Config password phase
         :param label: Remote ID
         :return:
         (current_contract ,address_wallet, label_wallet)
+        (200, '0x967a9C9f42ccC2891Cf89731E6D4F1279C0dB9d7', 'HW')
         '''
         # create address
+        (phrase,label) = body
         address = self.web3.parity.personal.newAccount(phrase)
+
         # set label for address
-        body = [address, label]
-        label_account = await self._parity_setAccountName(body)
+        body = (address, self.passphrase)
+        unlock_account = await self._unlock_account(body)
+        body = [self._check_sum_address(address), label]
+        try:
+            label_account = await self._parity_setAccountName(body)
         # create task for check_ballance()
-        (code,data) = label_account
+        except Exception as msg:
+            return (None, None, str(msg))
+
+        (code,mode, data) = label_account
         if code == 200:
             if data['result'] == True:
-                return (self.smart_contract,address,label)
+                return (200, address, label)
             else:
-                return (self.smart_contract,address,None)
-        elif code == 500:
-           return (self.smart_contract,address, data)
+                return (code, address, None)
+        else:
+            return (code, address, data)
 
-    async def check_ballance(self,address):
+    async def check_ballance(self, address, smart_contract=None):
         '''
         Returns the balance of the given account at the block specified by block_identifier.
         account may be a checksum address or an ENS name
@@ -84,7 +86,7 @@ class ETH:
             '''
             return (None, None, None)
 
-    async def take_list_address(self):
+    async def take_list_address(self, body):
         '''
         if using web3.py we take all address work in currnet node
         if using RPC.API parity_allAccountsInfo we take all address with detail info
@@ -93,32 +95,42 @@ class ETH:
         :return:
         [address_eth_isUpperCase, ..., ...]
         '''
-        # return all address in current wallet
-        # list = self.web3.parity.personal.listAccounts()
-        all_list = await self.parity_allAccountsInfo()
-        
-        return all_list
+        responce = {}
+        (hw)=body
+        (code,mode,data) = await self._parity_allAccountsInfo()
+        for (x,i) in  data['result'].items():
+            responce[x] = i['name']
+        # responce.remove(hw)
+
+        return (code,mode,responce)
 
     async def send_transaction(self, body):
-        '''
-        WARN rpc  eth_sendTransaction is deprecated and will be removed in future versions:
-        Account management is being phased out see #9997 for alternatives.
-        :param body:(send_to_wallet,send_from_wallet,value_send)
+        """
+        Method Create Send Transaction with RawTransaction
+        :param body:
+        contract = None || smart-contract
+        to_address = send to wallet
+        from_address = who send to wallet
+        value = ballance userwallet
+        gas = value gas
         :return:
-        (code, hash_trx)
-        '''
-        (send_to_wallet, send_from_wallet, value_send) = body
-        try:
-            if self.smart_contract is None:
-                hash = self.web3.eth.sendTransaction(
-                    {'to': send_to_wallet, 'from': send_from_wallet, 'value': value_send})
-            else:
-                # TODO SEARCH METHOD SEND TRANSACTION FOR ERC20
-                hash = None
-        except Exception as msg:
-            return (None,str(msg))
-
-        return (200,hash)
+        200 = code status
+        trx_hash = trx_hash
+        value = ballance-sender
+        """
+        (to_address, from_address, value, gas) = body
+        (_, value, _) = await self.check_ballance(address=from_address, smart_contract=self.smart_contract)
+        if value == 0:
+            # TODO Wait a transaction count
+            return (200, None, value)
+        else:
+            body = (address, value, gas)
+            trx = await self._create_transaction(body)
+            try:
+                trx_hash = await self._send_raw_transaction(data)
+            except Exception as msg:
+                return (500, str(msg), value)
+        return (200, trx_hash, value)
 
     async def _send_raw_transaction(self, transaction):
         '''
@@ -148,6 +160,12 @@ class ETH:
             return (500, str(msg))
         return answer
 
+    async def _parity_allAccountsInfo(self):
+        data = (1, 'parity_allAccountsInfo', [])
+        params = self._create_params(data)
+        answer = await self._request_node(params)
+        return answer
+
     async def _unlock_account(self, body):
         '''
         Unlocks the given account for duration seconds.
@@ -159,13 +177,16 @@ class ETH:
         '''
         (address, passphrase) = body
         try:
-            logic = self.web3.parity.personal.unlockAccount(address,passphrase)
+            logic = self.web3.parity.personal.unlockAccount(address, passphrase)
         except Exception as msg:
             print(str(msg))
-            return (msg['code'],msg['message'],msg['message'])
-        return (200,logic)
+            return (msg['code'], msg['message'], msg['message'])
+        return (200, logic)
 
     # Helper for Request for crypto Nodes Etherium
+    async def get_transaction(self, hash):
+        return self.web3.eth.getTransactionFromBlock(hash)
+
     def _create_params(self, body):
         '''
         Create Params for aiohttp request
@@ -232,8 +253,9 @@ class ETH:
         Returns a transaction that’s been signed by the node’s private key, but not yet submitted.
         The signed tx can be submitted with Eth.sendRawTransaction`
         '''
-        (address,value,gas) = body
-        nonce = _take_nonce(address)
+        (address, value, gas) = body
+
+        nonce = self._take_nonce(address)
         gasPrice = self.web3.eth.gasPrice
 
         if self.smart_contract is None:
@@ -253,8 +275,18 @@ class ETH:
                     'gasPrice': gasPrice,
                     'nonce': nonce,
             })
-
         return transaction
+
+    async def __generate_phase(self):
+        body =(1,'parity_generateSecretPhrase',[])
+        params = self._create_params(body)
+        (code,mode,data) = await self._request_node(params)
+        body = (1,'parity_phraseToAddress',[data['result']])
+        params = self._create_params(body)
+        (code,mode,param) = await self._request_node(params)
+        body =[param['result'],data['result']]
+
+        return (code,mode,body)
 
     async def _request_node(self, params):
         '''
@@ -265,13 +297,7 @@ class ETH:
         (200,'Ok')
         '''
         answer = await send_request_aiohttp(params)
-        (mode, code, data) = answer
-        if code is None:
-            return (None, data)
-        elif code == 200:
-            return (code, data)
-        else:
-            return (code, mode)
+        return answer
 
     # Helper Utils for request Eth Node
     def _check_web3_connected(self):
