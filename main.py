@@ -7,7 +7,7 @@ from example import Example
 async def main():
     print('server was started')
     loop = asyncio.get_running_loop()
-    unit = ETH()
+    # unit = ETH()
     unit = Example()
     loop.create_task(unit.start())
 

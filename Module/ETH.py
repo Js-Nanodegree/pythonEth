@@ -37,6 +37,10 @@ class ETH:
         :return:
         (current_contract ,address_wallet, label_wallet)
         (200, '0x967a9C9f42ccC2891Cf89731E6D4F1279C0dB9d7', 'HW')
+        [
+          '0x967a9c9f42ccc2891cf89731e6d4f1279c0db9d7',
+          '0xe279dc9d339d762e69015a9049242a64859d08e9'
+        ]
         '''
         # create address
         (phrase,label) = body
@@ -325,8 +329,7 @@ class ETH:
         '''
         if address is None:
             address = self.web3.eth.coinbase
-        nonce = self.web3.eth.getTransactionCount(address)
-        return nonce
+        return self.web3.eth.getTransactionCount(address)
 
     def _build_contract_usdt(self):
         return self.web3.eth.contract(address=self.smart_contract, abi=abi)

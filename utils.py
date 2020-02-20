@@ -1,6 +1,5 @@
-import json
-from web3 import Web3
-import  asyncio
+import asyncio
+
 import aiohttp
 import async_timeout
 
@@ -12,9 +11,9 @@ async def fetch(session, params, timeout=60):
                 responce = []
                 if resp.status == 200:
                     answer = await resp.json()
-                    responce = [resp.reason, resp.status, answer]
+                    responce = (resp.status, resp.reason, answer)
                 else:
-                    responce = [resp.reason, resp.status, None]
+                    responce = (resp.status, resp.reason, None)
                 return responce
         except Exception as msg:
             raise
