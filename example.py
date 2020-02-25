@@ -1,6 +1,7 @@
 import asyncio
 
 from Module.ETH import ETH
+from utils import send_request_aiohttp
 
 wallet_eth = '0x7e07c035242eb6874460d8c033eee25a333988d1'
 wallet_usdt = '0x3F9579D03d612E07dDc537feC32E8bb0Cc3cB58f'
@@ -21,23 +22,30 @@ class Example:
 <<<<<<< HEAD
         self.eth = ETH(
             loop=asyncio.get_event_loop(),
-            smart_contract=None,
-            hw='0x2a1a93439242212f039Aa020f0e74169ec889e32',
-            url="http://172.17.123.218:8545/",
+            smart_contract='0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            hw ='0x2a1a93439242212f039Aa020f0e74169ec889e32',
+            host = "http://172.17.123.218:8545/",
             # url = 'http://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd',
             key='0x00145ad01a3c93226fdf45d42221fe0f6810e610',
+            currency_id=4,
             mnemonc='pager glorified chokehold slacking scenic abruptly synopses easter tackle pang nuttiness crummiest',
-            passphrase='JOINMICROSTARK'
+            passphrase='JOINMICROSTARK32131'
         )
         self.usdt = ETH(
             loop=asyncio.get_event_loop(),
             smart_contract='0xdAC17F958D2ee523a2206206994597C13D831ec7',
-            hw='0x2a1a93439242212f039Aa020f0e74169ec889e32',
-            url="http://172.17.123.218:8545/",
+            hw=[
+                "0xe0f4Cd3dcC2DECA346bf4099E57f9771316E07C2",
+                '0xe0f4Cd3dcC2DECA346bf4099E57f9771316E07C2',
+                "0x2a1a93439242212f039Aa020f0e74169ec889e32",
+                '0x2a1a93439242212f039Aa020f0e74169ec889e32'
+            ],
+            host="http://172.17.123.218:8545/",
             # url = 'http://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd',
             key='0x00145ad01a3c93226fdf45d42221fe0f6810e610',
+            currency_id=7,
             mnemonc='pager glorified chokehold slacking scenic abruptly synopses easter tackle pang nuttiness crummiest',
-            passphrase='JOINMICROSTARK'
+            passphrase='JOINMICROSTARK321312'
         )
         self.address = [
             '0xe0f4Cd3dcC2DECA346bf4099E57f9771316E07C2',
@@ -68,8 +76,8 @@ class Example:
         data = await self.check_ballance()
         print(data)
         # check the syncked block
-        data = await self.eth.get_block()
-        data = await self.usdt.get_block()
+        data = await self.eth._get_block()
+        data = await self.usdt._get_block()
         # check all account
         data = await self.all_account()
         print(data)
@@ -81,28 +89,32 @@ class Example:
         )
 
     async def all_account(self):
-        body = (self.address[0])
-        data = await self.eth.take_list_address(body)
-        # print(data)
-        data = await self.usdt.take_list_address(body)
-        # print(data)
+        body = ()
+        data = await self.eth.get_accounts(type='name')
+        print(data)
+        data = await self.usdt.get_accounts(type='meta')
+        print(data)
+        data = await self.usdt.get_accounts(type='meta')
+        print(data)
         return 'All Accounts'
 
     async def create_account(self):
-        label = 'Trash'
+        remote_id = 'Trash'
         # print(label)
-        (code,mode,data) = await self.eth.create_address(label)
+        data = await self.eth.get_new_address(remote_id)
+        print('eth',data)
         # print((code,mode,data))
-        data = await self.eth._kill_account(address=data, phrase='Slava')
-        # print(data)
+        data = await self.eth._kill_address(address=data)
+        print('Kill',data)
 
         return 'Create Account'
 
     async def check_ballance(self):
         for item in self.address:
-            data = await self.usdt.check_ballance(item)
-            print(data)
-            data = await self.eth.check_ballance(item)
+            data = await self.usdt.get_balance(address = item)
+            print('usdt',data)
+            data = await self.eth.get_balance(address = item)
+            print('eth',data)
             print(data)
 
         return 'CheckBallance'

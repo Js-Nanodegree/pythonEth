@@ -10,18 +10,26 @@ abi = json.loads(
 
 
 class ETH:
-    def __init__(self, loop, smart_contract, HW, url, key, mnemonc, passphrase):
-        self.loop = asyncio.get_event_loop()
-        self.smart_contract = smart_contract
-        self.HW = HW
-        self.url = url
-        self.key = key
-        self.mnemonc = mnemonc
-        self.passphrase = passphrase
-        self.web3 = Web3(Web3.HTTPProvider(url))
+    def __init__(self, loop, smart_contract, hw, host, key, currency_id,mnemonc, passphrase):
+        self.web3 = Web3(Web3.HTTPProvider(host))  # ADD web3 interface init state
+        self._loop = loop  # ADD asyncio loop
+        self.smart_contract = smart_contract  # TODO ADD smart contract USDT take in config
+        self._key = key  # TODO ADD key hash for raw transaction take in config
+        self.passphrase = passphrase  # TODO ADD key passphrase for create address take in config default ("123123")
+        # self._async_client = httpclient.AsyncHTTPClient()  # tornado http client
+        self._host = host  # uri ETH address node
+        self._password_wallet =passphrase  # key phrase for create and transaction
+        self._hot_wallet = hw  # initial hotwallet address
+        self._currency_id = currency_id  # current id cryptonodes
+        self._filter = ""  # ?????? TODO WHAT IS
+        self._watch_addresses = set()  # add list address in watchlist for take all address in current cryptonode
+        self._sweep_addresses = set()  # add address in watchlist when trx is pending
+        self._transactions = set()  # add transaction in watchlist
 
-    # Curremt Library Method For NODE  ETHERIUM
-    async def create_address(self, label):
+    """
+        PUBLIC FUNCTION FOR CRYPTONODES 
+    """
+    async def get_new_address(self,remote_id):
         """
         this method create Eth Address and set Label for address
         :param label: (phrase, label) => (Take in Config password phase, Remote ID)
@@ -29,102 +37,69 @@ class ETH:
         (current_contract ,address_wallet, label_wallet)
         (200, '0x967a9C9f42ccC2891Cf89731E6D4F1279C0dB9d7', 'HW')
         """
-        # create address
-        address = self.web3.parity.personal.newAccount(self.passphrase)
-
-        # set label for address
+        # create address with new personal client parity account
+        address = await self._create_account()
+        if address is None:
+            return None
+        # unlock created account
         body = (address, self.passphrase)
-
-        (code, mode, data) = await self._unlock_account(body)
-        if code is None:
-            data = await self._kill_account(address, self.passphrase)
-            return (data, 'Unlock Account', 'Account is Lock')
-
-        elif code == 200:
-            body = [self._check_sum_address(address), label]
-            (code, mode, data) = await self._parity_set_label(body)
-
+        code = await self._unlock_account(body)
+        if code is not None:
+            body = [self._check_sum_address(address), remote_id]
+            (code,mode,data) = await self._parity_set_label(body)
             if code == 200:
-                if data['result'] == True:
-                    return (code, label, address)
-                else:
-                    return (code, None, address)
+                return  address
+
+        data = await self._kill_address(address)
+        return data
+
+    async def get_balance(self,address):
+        # request from ETH
+        if self._currency_id ==4:
+            ballance = await self._check_balance_eth(address)
+            return ballance
+        elif self._currency_id ==7:
+            constract = self._build_contract_usdt()
+            ballance = await self._check_balance_usdt(address)
+            return ballance
         else:
-            data = await self._kill_account(address, self.passphrase)
-            return (data, mode, data)
+            return None
 
-    async def get_transaction(self, hash):
-        return self.web3.eth.getTransactionFromBlock(hash)
-
-    async def check_ballance(self, address):
-        """
-        Returns the balance of the given account at the block specified by block_identifier.
-        account may be a checksum address or an ENS name
-        :param address: Checksum Address
-        :return:
-        (address,ballance,smart_contract)
-        """
-        if self._check_web3_connected() == True:
-            '''
-            connect with Web3 for main Node
-            '''
-            if self.smart_contract is None:
-                ballance = self.web3.eth.getBalance(
-                    self._check_sum_address(address))
-                return (address, self._from_wei(ballance), None)
-            else:
-                contract = self._build_contract_usdt()
-                try:
-                    ballance = contract.functions.balanceOf(
-                        self._check_sum_address(address)).call()
-                except Exception as msg:
-                    return (None, 'USDT Not Work', str(msg))
-                return (address, self._from_wei(ballance), self.smart_contract)
-        else:
-            '''
-            Need Connect to Reserved Node
-            '''
-            return (None, 'WEB3 IS NOT WORKING', None)
-
-    async def take_list_address(self, body):
-        """
-        if using web3.py we take all address work in currnet node
-        if using RPC.API parity_allAccountsInfo we take all address with detail info
-            {name:'Example',meta:'Something',UUID:'Some Number Hex'}
-
-        :return:
-        [address_eth_isUpperCase, ..., ...]
-        """
+    async def get_accounts(self,type='meta'):
         responce = {}
-        status = {}
-        (hw) = body
-        (code, mode, data) = await self._parity_accounts_info()
-        for (x, i) in data['result'].items():
-            if x != hw:
-                responce[x] = i['name']
-                status[x] = i['meta']
+        resArray = []
+        answer = await self._parity_accounts_info()
+        if answer is None:
+            return None
+        for (x, i) in answer['result'].items():
+            if x != self._hot_wallet:
+                if type == 'name':
+                    responce[x] = i['name']
+                if type == 'all':
+                    resArray.append(x)
+                else:
+                    responce[x] = i['meta']
 
-        return (code, mode, {'responce': responce, 'status': status})
+        if type=='all':
+            return resArray
+        else:
+            return responce
 
-    async def get_block(self):
-        """
-        function control ballance when he is synced
-        :return:
-        :rtype:
-        """
-        block = self.web3.eth.syncing
-        self.block = block['currentBlock']
-        body = (None)
-        (code, mode, data) = await self.take_list_address(body)
-        responce = []
-        for x in data['responce']:
-            (address, ballance, data) = await self.check_ballance(x)
-            if ballance == 0:
-                responce.append({x:block['currentBlock']})
 
-        self.ballance = responce
-        print(block['highestBlock']-block['currentBlock'],block['currentBlock'],self.ballance )
-        return True
+    async def set_status_address(self, body):
+        (address, key, value) = body
+        body = (1, 'parity_setAccountMeta', [address, str(json.dumps({key: value}))])
+        params = self._create_params(body)
+        answer = await self.send_aiohttp(params)
+        try:
+            (code, mode, data) = answer
+        except Exception as msg:
+            return (None, 'Meta not install', str(msg))
+
+        if code == 200:
+            return answer
+        else:
+            return (None, 'Meta not install', data)
 
     async def send_transaction(self, body):
         """
@@ -154,22 +129,97 @@ class ETH:
                 return (500, str(msg), value)
         return (200, trx_hash, value)
 
-    async def set_status_address(self, body):
-        (address, key, value) = body
-        body = (1, 'parity_setAccountMeta', [address, str(json.dumps({key: value}))])
+    """
+        PRIVATE FUNCTION FOR CRYPTONODES 
+    """
+
+    async def _parity_accounts_info(self):
+        body = (1, 'parity_allAccountsInfo', [])
         params = self._create_params(body)
-        answer = self._request_node(params)
         try:
-            (code, mode, data) = answer
+            (code, mode, data) = await self.send_aiohttp(params)
         except Exception as msg:
-            return (None, 'Meta not install', str(msg))
+            return None
+        return data
 
-        if code == 200:
-            return answer
-        else:
-            return (None, 'Meta not install', data)
+    async def _check_balance_eth(self,address):
+        try:
+            ballance = self.web3.eth.getBalance(self._check_sum_address(address))
+        except Exception as msg:
+            print(msg)
+            return None
+        print(ballance,'_check_balance_eth')
+        # return ballance
+        return self._from_wei(ballance)
 
-    # RPC API REQUEST FOR NODE ETHERIUM
+    async def _check_balance_usdt(self, address):
+        contact = self._build_contract_usdt()
+        try:
+            ballance = contact.functions.balanceOf(self._check_sum_address(address)).call()
+        except Exception as msg:
+            return None
+        print('_check_balance_usdt',ballance)
+        # return ballance
+        return self._from_wei(ballance)
+
+    async def _create_account(self):
+        try:
+            address = self.web3.parity.personal.newAccount(self.passphrase)
+        except Exception as msg:
+            return None
+        return address
+
+    async def _kill_address(self, address):
+        body = (1, 'parity_killAccount', [address, self.passphrase])
+        params = self._create_params(body)
+        try:
+            (code,mode,data) = await self.send_aiohttp(params)
+        except Exception as msg:
+        # TODO WRITE LOG ADDRESS
+            return None
+        return None
+
+    async def _unlock_account(self, body):
+        (address, passphrase) = body
+        try:
+            answer = self.web3.parity.personal.unlockAccount(address, passphrase)
+        except Exception as msg:
+            body = (1, 'parity_killAccount', [address, self.passphrase])
+            (code, mode, data) = await  self._kill_address(body)
+            return None
+        return answer
+
+    async def _parity_set_label(self, body):
+        data = (1, 'parity_setAccountName', body)
+        params = self._create_params(data)
+        try:
+            answer = await self.send_aiohttp(params)
+        except Exception as msg:
+            #   TODO CHECK THIS LOG FILE
+            return (None, 'Label Not Set', str(msg))
+        return answer
+
+    async def _get_block(self):
+        """
+        function control ballance when he is synced
+        :return:
+        :rtype:
+        """
+        block = self.web3.eth.syncing
+        self.block = block['currentBlock']
+        body = (None)
+        data = await self.get_accounts(body)
+        print(data)
+        responce = []
+        for x in data:
+            ballance = await self.get_balance(x)
+            if ballance == 0:
+                responce.append({x:block['currentBlock']})
+
+        self.ballance = responce
+        print(block['highestBlock']-block['currentBlock'],block['currentBlock'],self.ballance )
+        return True
+
     async def _create_transaction(self, body):
         """
         If the transaction specifies a data value but does not specify gas
@@ -206,56 +256,6 @@ class ETH:
             })
         return transaction
 
-    async def _kill_account(self, address, phrase):
-        """
-        Unlocks the given account for duration seconds.
-        If duration is None then the account will remain unlocked indefinitely.
-        Returns boolean as to whether the account was successfully unlocked.
-        :param address: (address,passphrase)
-        :param phrase: (address,passphrase)
-        :return:
-        (code,Boolean)
-        """
-        data = [self.passphrase, phrase]
-        for item in data:
-            body = (1, 'parity_killAccount', [address, item])
-            params = self._create_params(body)
-            try:
-                answer = await self._request_node(params)
-                print(answer)
-            except:
-                pass
-
-        return None
-
-    async def _parity_accounts_info(self):
-        data = (1, 'parity_allAccountsInfo', [])
-        params = self._create_params(data)
-        answer = await self._request_node(params)
-        return answer
-
-    async def _parity_set_label(self, body):
-        data = (1, 'parity_setAccountName', body)
-        params = self._create_params(data)
-        try:
-            answer = await self._request_node(params)
-        except Exception as msg:
-            #   TODO CHECK THIS LOG FILE
-            return (None, 'Label Not Set', str(msg))
-        return answer
-
-    @staticmethod
-    async def _request_node(params):
-        """
-        send request for aiohttp and fetch answer data in CryptoNodes ETH
-        :param params: create with method _create_params
-        :return:
-        (code,data['result'])
-        (200,'Ok')
-        """
-        answer = await send_request_aiohttp(params)
-        return answer
-
     async def _send_raw_transaction(self, transaction):
         """
         Returns a transaction that’s been signed by the node’s private key, but not yet submitted.
@@ -275,133 +275,64 @@ class ETH:
 
         return (200, 'Ok', send_raw_transaction)
 
-    async def _unlock_account(self, body):
-        """
-        Unlocks the given account for duration seconds.
-        If duration is None then the account will remain unlocked indefinitely.
-        Returns boolean as to whether the account was successfully unlocked.
-        :param body: (address,passphrase)
-        :return:
-        (code,mode,Boolean)
-        (200,'Ok', logic)
-        """
-        (address, passphrase) = body
+    async def _parity_set_label(self, body):
+        data = (1, 'parity_setAccountName', body)
+        params = self._create_params(data)
         try:
-            answer = self.web3.parity.personal.unlockAccount(
-                address, passphrase)
+            answer = await self.send_aiohttp(params)
         except Exception as msg:
-            return (None, 'Account is lock', str(msg))
-        return (200, 'OK', answer)
+            #   TODO CHECK THIS LOG FILE
+            return (None, 'Label Not Set', str(msg))
+        return answer
 
-    # privete function for generate account
+    """
+        SERVICE FUNCTION FOR CRYPTONODES 
+    """
+
+    def _create_params(self, body):
+        (key, method, args) = body
+        params = {'method': 'POST', 'headers': {'content-type': 'application/json'},
+                  'data': json.dumps({"jsonrpc": "2.0", "id": key, "method": method, "params": args}),
+                  'url': self._host}
+        return params
+
+    def _build_contract_usdt(self):
+        try:
+            answer = self.web3.eth.contract(address=self.smart_contract, abi=abi)
+        except Exception as msg:
+            return None
+        return answer
+
     async def __generate_phase(self):
         body = (1, 'parity_generateSecretPhrase', [])
         params = self._create_params(body)
-        (code, mode, data) = await self._request_node(params)
+        (code, mode, data) = await self.send_aiohttp(params)
 
         body = (1, 'parity_phraseToAddress', [data['result']])
         params = self._create_params(body)
-        (code, mode, param) = await self._request_node(params)
+        (code, mode, param) = await self.send_aiohttp(params)
 
         answer = [param['result'], data['result']]
         return (code, mode, answer)
 
-    # Helper Static Utils for request Eth Node
-    def _create_params(self, body):
-        """
-        Create Params for aiohttp request
-        :param body: (key_request,method_callable,args_request)
-        :return:
-        """
-        (key, method, args) = body
-        params = {'method': 'POST', 'headers': {'content-type': 'application/json'},
-                  'data': json.dumps({"jsonrpc": "2.0", "id": key, "method": method, "params": args}), 'url': self.url}
-        return params
-
-    @staticmethod
-    def _create_gas_params():
-        """
-        Create Params for aiohttp request
-        :return
-        [
-            {
-                gasprice: 40,
-                hashpower_accepting: 100,
-                hashpower_accepting2: 97.6744186047,
-                tx_atabove: 3,
-                age: 0,
-                pct_remaining5m: 0,
-                pct_mined_5m: 100,
-                total_seen_5m: 1,
-                average: 400,
-                safelow: 100,
-                nomine: null,
-                avgdiff: 1,
-                intercept: 4.8015,
-                hpa_coef: -0.0243,
-                avgdiff_coef: -1.6459,
-                tx_atabove_coef: 0.0006,
-                int2: 6.9238,
-                hpa_coef2: -0.067,
-                sum: 0.2238,
-                expectedWait: 2,
-                unsafe: 0,
-                expectedTime: 0.52
-            }
-        ]
-        """
-        params = {'method': 'GET', 'url': 'https://ethgasstation.info/json/ethgasAPI.json'}
-        return params
-
-    def _check_web3_connected(self):
-        return self.web3.isConnected()
-
     def _check_sum_address(self, address):
-        """
-        Will convert an upper or lowercase Ethereum address to a checksum address.
-        :param address:
-        :return:
-        """
-        correct_address = self.web3.isAddress(address)
-        if correct_address == True:
-            address = self.web3.toChecksumAddress(address)
-            return address
-        else:
+        try:
+            answer = self.web3.toChecksumAddress(address)
+        except Exception as msg:
             return None
+        return answer
 
-    def _take_nonce(self, address):
-        """
-        Last famous transaction id block for create transaction Id
-        :return:
-        number
-        """
-        if address is None:
-            address = self.web3.eth.coinbase
-        return self.web3.eth.getTransactionCount(address)
-
-    def _build_contract_usdt(self):
-        return self.web3.eth.contract(address=self.smart_contract, abi=abi)
-
-    def _from_wei(self, ballance):
-        if self.smart_contract is None:
-            return self.web3.fromWei(ballance, 'ether')
-        else:
-            return self.web3.fromWei(ballance, 'mwei')
-
-    def _hex_to_string(self, hex):
-        """
-        Returns the number representation of a given HEX value as a string.
-        :param hex: 0xea
-        :return:
-        "234"
-        """
-        return self.web3.hexToNumberString(hex)
-
-    def _number_to_hex(self, number):
-        """
-        Returns the HEX representation of a given number value.
-        :param number: "234"
-        :return:
-        0xea
-        """
-        return self.web3.numberToHex(number)
+    def _from_wei(self,ballance):
+        print(ballance)
+        if ballance is None:
+            return None
+        elif self._currency_id == 4:
+            body = (ballance, 'ether')
+        elif self._currency_id == 7:
+            body = (ballance, 'mwei')
+        try:
+            answer = self.web3.fromWei(body)
+            print
+        except Exception as msg:
+            return None
+        return answer
