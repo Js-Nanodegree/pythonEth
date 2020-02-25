@@ -1,5 +1,6 @@
 import json
 import asyncio
+
 from web3 import Web3
 
 from utils import send_request_aiohttp
@@ -8,23 +9,19 @@ abi = json.loads(
     '[{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"unpause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"paused","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"pause","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"},{"name":"_releaseTime","type":"uint256"}],"name":"mintTimelocked","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[],"name":"Pause","type":"event"},{"anonymous":false,"inputs":[],"name":"Unpause","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]')
 
 
-
 class ETH:
-    def __init__(self, loop, smart_contract, hw, host, key, currency_id,mnemonc, passphrase):
+    def __init__(self, smart_contract, hw, host, key, currency_id, mnemonc, passphrase,send_request_aiohttp,log_dir):
         self.web3 = Web3(Web3.HTTPProvider(host))  # ADD web3 interface init state
-        self._loop = loop  # ADD asyncio loop
+        self.send_aiohttp = send_request_aiohttp
+        self.log_dir = log_dir
+        self._loop = asyncio.get_event_loop()  # ADD asyncio loop
         self.smart_contract = smart_contract  # TODO ADD smart contract USDT take in config
         self._key = key  # TODO ADD key hash for raw transaction take in config
         self.passphrase = passphrase  # TODO ADD key passphrase for create address take in config default ("123123")
-        # self._async_client = httpclient.AsyncHTTPClient()  # tornado http client
         self._host = host  # uri ETH address node
-        self._password_wallet =passphrase  # key phrase for create and transaction
+        self._password_wallet = passphrase  # key phrase for create and transaction
         self._hot_wallet = hw  # initial hotwallet address
         self._currency_id = currency_id  # current id cryptonodes
-        self._filter = ""  # ?????? TODO WHAT IS
-        self._watch_addresses = set()  # add list address in watchlist for take all address in current cryptonode
-        self._sweep_addresses = set()  # add address in watchlist when trx is pending
-        self._transactions = set()  # add transaction in watchlist
 
     """
         PUBLIC FUNCTION FOR CRYPTONODES 
@@ -57,11 +54,12 @@ class ETH:
         # request from ETH
         if self._currency_id ==4:
             ballance = await self._check_balance_eth(address)
-            return ballance
+            answer = await self._from_wei(ballance)
+            return answer
         elif self._currency_id ==7:
-            constract = self._build_contract_usdt()
             ballance = await self._check_balance_usdt(address)
-            return ballance
+            answer = await self._from_wei(ballance)
+            return answer
         else:
             return None
 
@@ -71,7 +69,12 @@ class ETH:
         answer = await self._parity_accounts_info()
         if answer is None:
             return None
-        for (x, i) in answer['result'].items():
+        try:
+            data = answer['result']
+        except:
+            return None
+
+        for (x, i) in data.items():
             if x != self._hot_wallet:
                 if type == 'name':
                     responce[x] = i['name']
@@ -146,11 +149,8 @@ class ETH:
         try:
             ballance = self.web3.eth.getBalance(self._check_sum_address(address))
         except Exception as msg:
-            print(msg)
             return None
-        print(ballance,'_check_balance_eth')
-        # return ballance
-        return self._from_wei(ballance)
+        return ballance
 
     async def _check_balance_usdt(self, address):
         contact = self._build_contract_usdt()
@@ -158,9 +158,7 @@ class ETH:
             ballance = contact.functions.balanceOf(self._check_sum_address(address)).call()
         except Exception as msg:
             return None
-        print('_check_balance_usdt',ballance)
-        # return ballance
-        return self._from_wei(ballance)
+        return ballance
 
     async def _create_account(self):
         try:
@@ -206,10 +204,11 @@ class ETH:
         :rtype:
         """
         block = self.web3.eth.syncing
+        if block is False:
+            return False
         self.block = block['currentBlock']
         body = (None)
         data = await self.get_accounts(body)
-        print(data)
         responce = []
         for x in data:
             ballance = await self.get_balance(x)
@@ -322,17 +321,16 @@ class ETH:
             return None
         return answer
 
-    def _from_wei(self,ballance):
-        print(ballance)
-        if ballance is None:
-            return None
-        elif self._currency_id == 4:
+    async def _from_wei(self,ballance):
+        if self._currency_id == 4:
             body = (ballance, 'ether')
         elif self._currency_id == 7:
             body = (ballance, 'mwei')
+        else:
+            return ballance
+
         try:
-            answer = self.web3.fromWei(body)
-            print
+            answer = self.web3.fromWei(*body)
         except Exception as msg:
             return None
         return answer
