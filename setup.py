@@ -28,7 +28,7 @@ setup(
         ]
     },
     install_requires=[
-        'web3', "asyncio", "json", "aiohttp", "async_timeout"
+        'web3', "asyncio", "aiohttp", "async_timeout"
     ],
 #     tests_require=['pytest>=3.0', 'freezegun'],
 #     setup_requires=['pytest-runner'],

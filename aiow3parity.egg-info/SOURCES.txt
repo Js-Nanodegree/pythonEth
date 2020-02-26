@@ -7,3 +7,4 @@ aiow3parity.egg-info/SOURCES.txt
 aiow3parity.egg-info/dependency_links.txt
 aiow3parity.egg-info/requires.txt
 aiow3parity.egg-info/top_level.txt
+aiow3parity.egg-info/zip-safe
