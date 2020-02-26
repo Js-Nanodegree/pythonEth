@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(name='aiow3parity',
-      version='0.1',
+      version='1.1',
       description='Easy go to parity w3 transaction',
-      url='',
+      url='https://github.com/Js-Nanodegree/pythonEth',
       author='Js-Nanodegree',
       author_email='js-nanodegree@gmail.com',
       license='MIT',

@@ -1,5 +1,5 @@
 git remote add jsnano https://Js-Nanodegree:ZaqMlp123!@github.com/Js-Nanodegree/pythonEth.git && \
-git add . && \
+git add -A && \
 git commit -m 'new commit' && \
 git push jsnano BIZ-14/CryptoLibrary/ETH  && \
 git pull jsnano BIZ-14/CryptoLibrary/ETH && \
