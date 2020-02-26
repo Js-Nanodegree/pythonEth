@@ -1,5 +1,4 @@
 web3
 asyncio
-json
 aiohttp
 async_timeout
