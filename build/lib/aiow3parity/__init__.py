@@ -10,11 +10,10 @@ abi = json.loads(
 
 
 class ETH:
-    def __init__(self, smart_contract, hw, host, key, currency_id, mnemonic, passphrase,send_request_aiohttp,log_function):
+    def __init__(self, smart_contract, hw, host, key, currency_id, mnemonc, passphrase,send_request_aiohttp,log_dir):
         self.web3 = Web3(Web3.HTTPProvider(host))  # ADD web3 interface init state
         self.send_aiohttp = send_request_aiohttp
-        self.log_function = log_function
-        self.mnemonic = mnemonic
+        self.log_dir = log_dir
         self._loop = asyncio.get_event_loop()  # ADD asyncio loop
         self.smart_contract = smart_contract  # TODO ADD smart contract USDT take in config
         self._key = key  # TODO ADD key hash for raw transaction take in config
