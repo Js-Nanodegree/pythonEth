@@ -52,7 +52,13 @@ class ETH:
         return data
 
     async def get_balance(self,address):
-        # request from ETH
+        """
+        Create request for diffrent curr_id address and mode
+        :param address:
+        :type address:
+        :return:
+        :rtype:
+        """
         if self._currency_id ==4:
             ballance = await self._check_balance_eth(address)
             answer = await self._from_wei(ballance)
@@ -65,6 +71,14 @@ class ETH:
             return None
 
     async def get_accounts(self,type='meta'):
+        """
+        Create rest query for cryptonode for take all acount with information
+        label remote id  and meta status wallet
+        :param type: is selecter maybe(meta,name and only)
+        :type type:
+        :return: return address with some address info
+        :rtype: return only address wallet
+        """
         responce = {}
         resArray = []
         answer = await self._parity_accounts_info()
@@ -84,13 +98,20 @@ class ETH:
                 else:
                     responce[x] = i['meta']
 
-        if type=='all':
+        if type=='only':
             return resArray
         else:
             return responce
 
 
     async def set_status_address(self, body):
+        """
+        Create rest query for cryptonode for set status or label in current wallet
+        :param body: have  (address, key, value)
+        :type body:
+        :return:
+        :rtype: True
+        """
         (address, key, value) = body
         body = (1, 'parity_setAccountMeta', [address, str(json.dumps({key: value}))])
         params = self._create_params(body)
@@ -138,6 +159,11 @@ class ETH:
     """
 
     async def _parity_accounts_info(self):
+        """
+        Private request function for all acounts info
+        :return: {address:{name:'',meta:'',hash:''}}
+        :rtype:
+        """
         body = (1, 'parity_allAccountsInfo', [])
         params = self._create_params(body)
         try:
@@ -147,6 +173,13 @@ class ETH:
         return data
 
     async def _check_balance_eth(self,address):
+        """
+        Private request function for check ballance info for ETH
+        :param address:
+        :type address:
+        :return:
+        :rtype:
+        """
         try:
             ballance = self.web3.eth.getBalance(self._check_sum_address(address))
         except Exception as msg:
@@ -154,6 +187,13 @@ class ETH:
         return ballance
 
     async def _check_balance_usdt(self, address):
+        """
+        Private request function for check ballance info for ERC20
+        :param address:
+        :type address:
+        :return:
+        :rtype:
+        """
         contact = self._build_contract_usdt()
         try:
             ballance = contact.functions.balanceOf(self._check_sum_address(address)).call()
@@ -162,6 +202,11 @@ class ETH:
         return ballance
 
     async def _create_account(self):
+        """
+        Private request function for create account into ETH and ERC20
+        :return:
+        :rtype:
+        """
         try:
             address = self.web3.parity.personal.newAccount(self.passphrase)
         except Exception as msg:
@@ -169,6 +214,13 @@ class ETH:
         return address
 
     async def _kill_address(self, address):
+        """
+        Private request function for kill account into ETH and ERC20 if create with Error module
+        :param address:
+        :type address:
+        :return:
+        :rtype:
+        """
         body = (1, 'parity_killAccount', [address, self.passphrase])
         params = self._create_params(body)
         try:
@@ -176,19 +228,34 @@ class ETH:
         except Exception as msg:
         # TODO WRITE LOG ADDRESS
             return None
-        return None
+        if code:
+            return None
 
     async def _unlock_account(self, body):
+        """
+        Private request function for unclock account into ETH and ERC20 if create with Error module
+        :param body:
+        :type body:
+        :return:
+        :rtype:
+        """
         (address, passphrase) = body
         try:
             answer = self.web3.parity.personal.unlockAccount(address, passphrase)
         except Exception as msg:
             body = (1, 'parity_killAccount', [address, self.passphrase])
-            (code, mode, data) = await  self._kill_address(body)
-            return None
+            data = await  self._kill_address(body)
+            return data
         return answer
 
     async def _parity_set_label(self, body):
+        """
+        Private request function for set label account into ETH and ERC20 for status are build
+        :param body:
+        :type body:
+        :return:
+        :rtype:
+        """
         data = (1, 'parity_setAccountName', body)
         params = self._create_params(data)
         try:
@@ -290,6 +357,13 @@ class ETH:
     """
 
     def _create_params(self, body):
+        """
+        Custom Params for create param Requst for Crypto Module
+        :param body:
+        :type body:
+        :return:
+        :rtype:
+        """
         (key, method, args) = body
         params = {'method': 'POST', 'headers': {'content-type': 'application/json'},
                   'data': json.dumps({"jsonrpc": "2.0", "id": key, "method": method, "params": args}),
@@ -297,6 +371,11 @@ class ETH:
         return params
 
     def _build_contract_usdt(self):
+        """
+        Build USDT contract class for request in cryptonode
+        :return:
+        :rtype:
+        """
         try:
             answer = self.web3.eth.contract(address=self.smart_contract, abi=abi)
         except Exception as msg:
@@ -304,6 +383,11 @@ class ETH:
         return answer
 
     async def __generate_phase(self):
+        """
+        generate phace this phase build mnemonic
+        :return:
+        :rtype:
+        """
         body = (1, 'parity_generateSecretPhrase', [])
         params = self._create_params(body)
         (code, mode, data) = await self.send_aiohttp(params)
@@ -316,6 +400,13 @@ class ETH:
         return (code, mode, answer)
 
     def _check_sum_address(self, address):
+        """
+        create Uppercase address
+        :param address:
+        :type address:
+        :return:
+        :rtype:
+        """
         try:
             answer = self.web3.toChecksumAddress(address)
         except Exception as msg:
@@ -323,6 +414,13 @@ class ETH:
         return answer
 
     async def _from_wei(self,ballance):
+        """
+        create from wei
+        :param ballance:
+        :type ballance:
+        :return:
+        :rtype:
+        """
         if self._currency_id == 4:
             body = (ballance, 'ether')
         elif self._currency_id == 7:
