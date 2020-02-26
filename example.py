@@ -1,6 +1,6 @@
 import asyncio
 
-from Module.ETH import ETH
+from aiow3parity import ETH
 from utils import send_request_aiohttp
 
 wallet_eth = '0x7e07c035242eb6874460d8c033eee25a333988d1'
@@ -14,7 +14,7 @@ class Example:
         self.loop = asyncio.get_event_loop()
         self.eth = ETH(
             send_request_aiohttp=send_request_aiohttp,
-            log_dir ="Log_Dir",
+            log_function ="Log_Dir",
             smart_contract='0xdAC17F958D2ee523a2206206994597C13D831ec7',
             hw='0x2a1a93439242212f039Aa020f0e74169ec889e32',
             # host = "http://172.17.123.218:8545/",
@@ -26,7 +26,7 @@ class Example:
         )
         self.usdt = ETH(
             send_request_aiohttp=send_request_aiohttp,
-            log_dir="Log_Dir",
+            log_function="Log_Dir",
             smart_contract='0xdAC17F958D2ee523a2206206994597C13D831ec7',
             hw=[
                 "0xe0f4Cd3dcC2DECA346bf4099E57f9771316E07C2",
@@ -38,7 +38,7 @@ class Example:
             # host = 'https://mainnet.infura.io/v3/698185618aa64a9f918c9bf9590520bd',
             key='0x00145ad01a3c93226fdf45d42221fe0f6810e610',
             currency_id=7,
-            mnemonc='pager glorified chokehold slacking scenic abruptly synopses easter tackle pang nuttiness crummiest',
+            mnemonic='pager glorified chokehold slacking scenic abruptly synopses easter tackle pang nuttiness crummiest',
             passphrase='JOINMICROSTARK321312'
         )
         self.address = [

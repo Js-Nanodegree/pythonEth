@@ -1,0 +1,9 @@
+README.md
+setup.py
+aiow3parity/ETH.py
+aiow3parity/__init__.py
+aiow3parity.egg-info/PKG-INFO
+aiow3parity.egg-info/SOURCES.txt
+aiow3parity.egg-info/dependency_links.txt
+aiow3parity.egg-info/requires.txt
+aiow3parity.egg-info/top_level.txt
