@@ -5,3 +5,6 @@ package-lock.json
 node_modules
 main.js
 __pycache__
+build
+dist
+aiow3parity.egg-info
