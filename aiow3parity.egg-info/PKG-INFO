@@ -1,9 +1,9 @@
 Metadata-Version: 1.0
 Name: aiow3parity
-Version: 0.6.4
+Version: 0.0.1
 Summary: acquire data published on the smartfact web page
 Home-page: https://github.com/Js-Nanodegree/pythonEth
-Author: Dominik Neise, Sebastian Mueller, Maximilian Nöthe
+Author: Js-Nanodegree
 Author-email: jsnanodegree@gmail.com
 License: MIT
 Description: UNKNOWN
